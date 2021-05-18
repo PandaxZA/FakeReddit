@@ -114,5 +114,3 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
-
-fakereddit-server/src/mikro-orm.config.ts

@@ -1,0 +1,11 @@
+{
+  "folders": [
+	{
+		"path": "fakereddit-server"
+	},
+	{
+		"path": "fakereddit-web"
+	}
+],
+  "settings": {}
+}

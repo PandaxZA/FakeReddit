@@ -25,6 +25,16 @@ learning new tech stack in typescript powered fullstack.
 
 - `yarn dev`
 
+## Frontend:
+
+Launch next.js
+
+- `yarn dev`
+
+Build GraphQL schema:
+
+- `yarn gen`
+
 ## Redis:
 
 Launch Redis:

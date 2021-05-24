@@ -1,17 +1,17 @@
 import { Box, Button, Link } from "@chakra-ui/react";
-import { Formik, Form } from "formik";
+import { Form, Formik } from "formik";
 import { NextPage } from "next";
-import { withUrqlClient, WithUrqlProps } from "next-urql";
+import { withUrqlClient } from "next-urql";
+import NextLink from "next/link";
 import { useRouter } from "next/router";
-import React, { FunctionComponent, PropsWithChildren, useState } from "react";
+import React, { useState } from "react";
 import { InputField } from "../../components/InputField";
 import { Wrapper } from "../../components/Wrapper";
 import { useChangePasswordMutation } from "../../generated/graphql";
 import { createUrqlClient } from "../../utils/createUrqlClient";
 import { toErrorMap } from "../../utils/toErrorMap";
-import NextLink from "next/link";
 
-export const PasswordReset: NextPage<{ token: string }> = ({ token }) => {
+export const PasswordReset: NextPage = () => {
   const [, changePassoword] = useChangePasswordMutation();
   const router = useRouter();
   const [tokenError, setTokenError] = useState("");
@@ -22,7 +22,8 @@ export const PasswordReset: NextPage<{ token: string }> = ({ token }) => {
         onSubmit={async (values, { setErrors }) => {
           const response = await changePassoword({
             newPassword: values.newPassword,
-            token,
+            token:
+              typeof router.query.token === "string" ? router.query.token : "",
           });
           if (response.data?.changePassword.errors) {
             const errorMap = toErrorMap(response.data.changePassword.errors);
@@ -66,14 +67,4 @@ export const PasswordReset: NextPage<{ token: string }> = ({ token }) => {
   );
 };
 
-PasswordReset.getInitialProps = ({ query }) => {
-  return {
-    token: query.token as string,
-  };
-};
-
-export default withUrqlClient(createUrqlClient, { ssr: false })(
-  PasswordReset as FunctionComponent<
-    PropsWithChildren<WithUrqlProps | { token: string }>
-  >
-);
+export default withUrqlClient(createUrqlClient)(PasswordReset);

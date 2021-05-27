@@ -40,3 +40,8 @@ Build GraphQL schema:
 Launch Redis:
 
 - `redis-server /usr/local/etc/redis.conf`
+- `$ brew services start postgres`
+- `$ brew services stop postgres`
+
+- `$ brew services start redis`
+- `$ brew services stop redis`

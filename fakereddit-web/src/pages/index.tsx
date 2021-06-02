@@ -50,6 +50,7 @@ const Index = () => {
       {data ? (
         <Flex>
           <Button
+            colorScheme="blackAlpha"
             onClick={() => {
               setVariables({
                 limit: variables.limit,

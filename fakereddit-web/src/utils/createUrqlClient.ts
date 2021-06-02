@@ -1,5 +1,10 @@
 import { cacheExchange, Resolver } from "@urql/exchange-graphcache";
-import { dedupExchange, errorExchange, fetchExchange } from "urql";
+import {
+  dedupExchange,
+  errorExchange,
+  fetchExchange,
+  stringifyVariables,
+} from "urql";
 import {
   LoginMutation,
   LogoutMutation,
@@ -28,6 +33,11 @@ const cursorPagination = (): Resolver => {
     if (size === 0) {
       return undefined;
     }
+    const fieldKey = `${fieldName}(${stringifyVariables(fieldArgs)})`;
+    const isItInTheCache = cache.resolveFieldByKey(entityKey, fieldKey);
+
+    info.partial = !isItInTheCache;
+
     const results: string[] = [];
     fieldInfos.forEach((fieldInfo) => {
       const data = cache.resolveFieldByKey(
@@ -35,8 +45,9 @@ const cursorPagination = (): Resolver => {
         fieldInfo.fieldKey
       ) as string[];
       results.push(...data);
-      console.log(data);
     });
+
+    return results;
 
     // const visited = new Set();
     // let result: NullArray<string> = [];
@@ -102,7 +113,7 @@ export const createUrqlClient = (ssrExchange: any) => ({
     cacheExchange({
       resolvers: {
         Query: {
-          psots: cursorPagination(),
+          posts: cursorPagination(),
         },
       },
       updates: {

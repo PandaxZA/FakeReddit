@@ -17,6 +17,7 @@ import {
   Root,
   UseMiddleware,
 } from "type-graphql";
+import { Upvote } from "../entities/Upvote";
 
 @InputType()
 class PostInput {
@@ -41,6 +42,35 @@ export class PostResolver {
     return root.text.slice(0, 50);
   }
 
+  @Mutation(() => Boolean)
+  @UseMiddleware(isAuth)
+  async vote(
+    @Arg("value", () => Int) value: number,
+    @Arg("postId", () => Int) postId: number,
+    @Ctx() { req }: MyContext
+  ) {
+    const { userId } = req.session;
+    const isUpvote = value !== -1;
+    const realValue = isUpvote ? 1 : -1;
+    // await Upvote.insert({
+    //   userId,
+    //   postId,
+    //   value: realValue,
+    // });
+    await getConnection().query(
+      `
+    START TRANSACTION;
+    insert into upvote ("userId", "postId", value)
+    values (${userId},${postId},${realValue});
+    update post
+    set points = points + ${realValue}
+    where id = ${postId};
+    COMMIT;
+   `
+    );
+    return true;
+  }
+
   @Query(() => PaginatedPosts)
   async posts(
     @Arg("limit", () => Int) limit: number,
@@ -49,20 +79,45 @@ export class PostResolver {
     const actualLimit = Math.min(50, limit);
     const actualLimitPlusOne = Math.min(50, limit) + 1;
 
-    const qb = getConnection()
-      .getRepository(Post)
-      .createQueryBuilder("p")
-      .innerJoinAndSelect("p.author", "u", 'u.id = p."authorId"')
-      .orderBy('p."createdAt"', "DESC")
-      .take(actualLimitPlusOne);
+    const replacements: any[] = [actualLimitPlusOne];
 
     if (cursor) {
-      qb.where('p."createdAt" < :cursor', {
-        cursor: new Date(parseInt(cursor)),
-      });
+      replacements.push(new Date(parseInt(cursor)));
     }
 
-    const posts = await qb.getMany();
+    const posts = await getConnection().query(
+      `
+      select p.*,
+      json_build_object(
+        'id', u.id,
+        'username', u.username,
+        'name', u.name,
+        'email', u.email
+      ) author
+       from post p
+      inner join public.user u on u.id = p."authorId"
+    ${cursor ? `where p."createdAt" < $2` : ""}
+      order by p."createdAt" DESC
+      limit $1
+    `,
+      replacements
+    );
+
+    // const qb = getConnection()
+    //   .getRepository(Post)
+    //   .createQueryBuilder("p")
+    //   .innerJoinAndSelect("p.author", "u", 'u.id = p."authorId"')
+    //   .orderBy('p."createdAt"', "DESC")
+    //   .take(actualLimitPlusOne);
+
+    // if (cursor) {
+    //   qb.where('p."createdAt" < :cursor', {
+    //     cursor: new Date(parseInt(cursor)),
+    //   });
+    // }
+
+    // const posts = await qb.getMany();
+
     return {
       posts: posts.slice(0, actualLimit),
       hasMore: posts.length === actualLimitPlusOne,

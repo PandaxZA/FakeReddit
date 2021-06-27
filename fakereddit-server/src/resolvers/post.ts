@@ -17,7 +17,6 @@ import {
   Root,
   UseMiddleware,
 } from "type-graphql";
-import { Upvote } from "../entities/Upvote";
 
 @InputType()
 class PostInput {
